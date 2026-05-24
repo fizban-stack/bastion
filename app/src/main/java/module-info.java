@@ -47,6 +47,7 @@ open module io.xpipe.app {
     exports io.xpipe.app.icon;
     exports io.xpipe.app.pwman;
     exports io.xpipe.app.rdp;
+    exports io.xpipe.app.sessions;
     exports io.xpipe.app.vnc;
     exports io.xpipe.app.action;
     exports io.xpipe.app.browser.menu;

@@ -13,6 +13,7 @@ import io.xpipe.app.process.ShellDialect;
 import io.xpipe.app.process.ShellScript;
 import io.xpipe.app.pwman.PasswordManager;
 import io.xpipe.app.rdp.ExternalRdpClient;
+import io.xpipe.app.sessions.SessionsCategory;
 import io.xpipe.app.spice.ExternalSpiceClient;
 import io.xpipe.app.storage.DataStorage;
 import io.xpipe.app.storage.DataStorageUserHandler;
@@ -435,6 +436,33 @@ public final class AppPrefs {
     final BooleanProperty allowExternalApiRequests =
             mapLocal(new GlobalBooleanProperty(false), "allowExternalApiRequests", Boolean.class, false);
 
+    // Sessions subsystem (recording + transcription + retention) — see io.xpipe.app.sessions.
+    // All four default OFF / zero — never silent default-on.
+    public final BooleanProperty sessionRecording = map(Mapping.builder()
+            .property(new GlobalBooleanProperty(false))
+            .key("sessionRecording")
+            .valueClass(Boolean.class)
+            .requiresRestart(false)
+            .build());
+    public final BooleanProperty sessionTranscription = map(Mapping.builder()
+            .property(new GlobalBooleanProperty(false))
+            .key("sessionTranscription")
+            .valueClass(Boolean.class)
+            .requiresRestart(false)
+            .build());
+    public final Property<Integer> sessionRetentionDays = map(Mapping.builder()
+            .property(new GlobalObjectProperty<>(0))
+            .key("sessionRetentionDays")
+            .valueClass(Integer.class)
+            .requiresRestart(false)
+            .build());
+    public final Property<Integer> sessionMaxMegabytes = map(Mapping.builder()
+            .property(new GlobalObjectProperty<>(0))
+            .key("sessionMaxMegabytes")
+            .valueClass(Integer.class)
+            .requiresRestart(false)
+            .build());
+
     @Getter
     private final StringProperty lockCrypt =
             mapVaultShared(new GlobalStringProperty(), "workspaceLock", String.class, true);
@@ -450,6 +478,7 @@ public final class AppPrefs {
             new EditorCategory(),
             new RdpCategory(),
             new VncCategory(),
+            new SessionsCategory(),
             new SshCategory(),
             new ConnectionHubCategory(),
             new FileBrowserCategory(),
