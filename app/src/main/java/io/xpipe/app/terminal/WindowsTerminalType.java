@@ -141,7 +141,7 @@ public interface WindowsTerminalType extends ExternalTerminalType, TrackableTerm
         var newProfile = JsonNodeFactory.instance.objectNode();
         newProfile.put("guid", uuid);
         newProfile.put("hidden", true);
-        newProfile.put("name", "XPipe");
+        newProfile.put("name", "Bastion");
         newProfile.put("closeOnExit", "always");
         newProfile.put("suppressApplicationTitle", true);
         // To make docking a better experience

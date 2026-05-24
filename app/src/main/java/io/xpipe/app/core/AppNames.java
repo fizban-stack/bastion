@@ -46,22 +46,22 @@ public abstract class AppNames {
 
         @Override
         public String getName() {
-            return "XPipe";
+            return "Bastion";
         }
 
         @Override
         public String getKebapName() {
-            return "xpipe";
+            return "bastion";
         }
 
         @Override
         public String getSnakeName() {
-            return "xpipe";
+            return "bastion";
         }
 
         @Override
         public String getUppercaseName() {
-            return "XPIPE";
+            return "BASTION";
         }
 
         @Override
@@ -71,7 +71,7 @@ public abstract class AppNames {
 
         @Override
         public String getExecutableName() {
-            return "xpiped";
+            return "bastiond";
         }
     }
 
@@ -79,22 +79,22 @@ public abstract class AppNames {
 
         @Override
         public String getName() {
-            return "XPipe PTB";
+            return "Bastion PTB";
         }
 
         @Override
         public String getKebapName() {
-            return "xpipe-ptb";
+            return "bastion-ptb";
         }
 
         @Override
         public String getSnakeName() {
-            return "xpipe_ptb";
+            return "bastion_ptb";
         }
 
         @Override
         public String getUppercaseName() {
-            return "XPIPE_PTB";
+            return "BASTION_PTB";
         }
 
         @Override
@@ -104,7 +104,7 @@ public abstract class AppNames {
 
         @Override
         public String getExecutableName() {
-            return "xpiped";
+            return "bastiond";
         }
     }
 }

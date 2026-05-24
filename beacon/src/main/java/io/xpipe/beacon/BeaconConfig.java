@@ -83,12 +83,12 @@ public class BeaconConfig {
                 .orElse(false);
         if (OsType.ofLocal() == OsType.LINUX) {
             var name = System.getenv("USER") != null ? System.getenv("USER") : System.getProperty("user.name");
-            return Path.of(System.getProperty("java.io.tmpdir"), staging ? "xpipe-ptb" : "xpipe", name, "beacon-auth");
+            return Path.of(System.getProperty("java.io.tmpdir"), staging ? "bastion-ptb" : "bastion", name, "beacon-auth");
         } else {
-            var path = Path.of(System.getProperty("java.io.tmpdir"), staging ? "xpipe-ptb" : "xpipe", "beacon-auth");
+            var path = Path.of(System.getProperty("java.io.tmpdir"), staging ? "bastion-ptb" : "bastion", "beacon-auth");
             if (path.startsWith(Path.of("C:\\Windows"))) {
                 path = Path.of(System.getenv("LOCALAPPDATA"))
-                        .resolve("Temp", staging ? "xpipe-ptb" : "xpipe", "beacon-auth");
+                        .resolve("Temp", staging ? "bastion-ptb" : "bastion", "beacon-auth");
             }
             return path;
         }

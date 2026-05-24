@@ -1,4 +1,4 @@
-rootProject.name = 'xpipe'
+rootProject.name = 'bastion'
 
 include 'core'
 include 'beacon'
