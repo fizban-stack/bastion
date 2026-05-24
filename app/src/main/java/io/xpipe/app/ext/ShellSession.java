@@ -4,6 +4,7 @@ import io.xpipe.app.issue.ErrorEventFactory;
 import io.xpipe.app.prefs.AppPrefs;
 import io.xpipe.app.process.CommandBuilder;
 import io.xpipe.app.process.ShellControl;
+import io.xpipe.app.sessions.ShellSessionTranscriber;
 import io.xpipe.core.FailableSupplier;
 
 import lombok.Getter;
@@ -41,6 +42,7 @@ public class ShellSession extends Session {
         pc.onExit(ignored -> {
             listener.onStateChange(false);
         });
+        ShellSessionTranscriber.attach(pc);
         return pc;
     }
 
