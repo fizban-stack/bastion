@@ -24,6 +24,7 @@ import io.xpipe.app.issue.TrackEvent;
 import io.xpipe.app.platform.PlatformInit;
 import io.xpipe.app.platform.PlatformState;
 import io.xpipe.app.prefs.AppPrefs;
+import io.xpipe.app.sessions.SessionRecorder;
 import io.xpipe.app.prefs.WorkspaceManager;
 import io.xpipe.app.process.LocalShell;
 import io.xpipe.app.pwman.KeePassXcPasswordManager;
@@ -159,6 +160,7 @@ public class AppBaseMode extends AppOperationMode {
                     TerminalLauncherManager.init();
                     TerminalDockHubManager.init();
                     RemoteDesktopWindow.init();
+                    SessionRecorder.init();
                     TrackEvent.info("File/Terminal initialization thread completed");
                 },
                 () -> {
