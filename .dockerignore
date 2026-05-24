@@ -1,0 +1,35 @@
+# Gradle build artifacts — each module builds into build/
+**/build/
+**/.gradle/
+
+# IDE and editor files
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker top-level files (not the docker/ scripts dir — that IS needed in context)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# PAI and development artifacts
+ISA.md
+IMPROVEMENTS.md
+
+# OS artifacts
+**/.DS_Store
+**/Thumbs.db
+
+# Log files
+**/*.log
+**/logs/
+
+# Test output
+**/test-results/
+**/jacoco/

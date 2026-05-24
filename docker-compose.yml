@@ -1,0 +1,59 @@
+services:
+  bastion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bastion
+    restart: unless-stopped
+
+    environment:
+      # ── LinuxServer / webtop settings ─────────────────────────────────────
+      # User and group ID for the abc desktop user.
+      # Match these to your host user to avoid permission issues on volumes.
+      PUID: 1000
+      PGID: 1000
+      TZ: America/Los_Angeles
+
+      # ── Bastion settings ───────────────────────────────────────────────────
+      # Data directory inside the container — stored in the /config volume
+      BASTION_DATA_DIR: /config/bastion
+      # Beacon API port (must match the port mapping below)
+      BASTION_PORT: 21721
+
+      # Optional: lock the desktop with a password (webtop feature)
+      # PASSWORD: your-desktop-password
+
+      # Optional: set a static API key for the beacon
+      # BASTION_API_KEY: your-api-key-here
+
+    ports:
+      # ── Web browser access to the desktop ─────────────────────────────────
+      - "3000:3000"   # Open http://your-server:3000 to see Bastion's GUI
+      - "3001:3001"   # HTTPS version (self-signed cert by default)
+
+      # ── Beacon API ────────────────────────────────────────────────────────
+      - "21721:21721" # Bastion CLI and external integrations
+
+    volumes:
+      # Persistent config: webtop user home + Bastion connection data + Gradle cache
+      - bastion-config:/config
+      # Gradle build cache: avoid recompiling on every container restart
+      - gradle-cache:/config/.gradle
+
+    security_opt:
+      # Required for some webtop desktop compositing features
+      - seccomp:unconfined
+
+    # Healthcheck: Bastion beacon API is up
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:21721/daemon/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  bastion-config:
+    driver: local
+  gradle-cache:
+    driver: local

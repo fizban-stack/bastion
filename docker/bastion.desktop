@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Bastion
+Comment=Bastion Connection Hub
+Exec=/opt/bastion/docker/start-bastion-gui.sh
+Icon=/opt/bastion/app/src/main/resources/io/xpipe/app/resources/logo/logo.png
+Terminal=false
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+X-XFCE-Autostart-Override=true
