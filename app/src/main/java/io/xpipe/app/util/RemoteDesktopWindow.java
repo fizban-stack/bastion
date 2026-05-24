@@ -2,6 +2,7 @@ package io.xpipe.app.util;
 
 import io.xpipe.app.core.*;
 import io.xpipe.app.core.window.AppMainWindow;
+import io.xpipe.app.issue.ErrorEventFactory;
 import io.xpipe.app.core.window.AppModifiedStage;
 import io.xpipe.app.core.window.AppWindowStyle;
 import io.xpipe.app.platform.DerivedObservableList;
@@ -16,6 +17,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableStringValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.layout.Region;
@@ -30,6 +32,9 @@ import lombok.extern.jackson.Jacksonized;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class RemoteDesktopWindow {
@@ -45,6 +50,7 @@ public class RemoteDesktopWindow {
             return INSTANCE.nativeWinWindowControl;
         });
         INSTANCE = new RemoteDesktopWindow(state, model);
+        INSTANCE.installLifecycleListener();
         INSTANCE.startStateListener();
     }
 
@@ -68,6 +74,66 @@ public class RemoteDesktopWindow {
 
     @Getter
     private final ObservableList<RemoteDesktopDockEntry> processes = FXCollections.observableArrayList();
+
+    private final List<Consumer<RemoteDesktopDockEntry>> trackedListeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<RemoteDesktopDockEntry>> untrackedListeners = new CopyOnWriteArrayList<>();
+
+    /**
+     * Register a listener invoked whenever a new RDP/VNC session is tracked
+     * (an entry is added to {@link #processes}). Listener fires on the JavaFX
+     * application thread — work that may block or take long should hop to a
+     * background thread via {@code ThreadHelper.runAsync(...)}.
+     */
+    public void onTracked(Consumer<RemoteDesktopDockEntry> listener) {
+        trackedListeners.add(listener);
+    }
+
+    /**
+     * Register a listener invoked whenever a tracked session ends (an entry is
+     * removed from {@link #processes}, whether via explicit close or because
+     * the underlying process died and {@code model.clearDead()} pruned it).
+     * Same thread semantics as {@link #onTracked}.
+     */
+    public void onUntracked(Consumer<RemoteDesktopDockEntry> listener) {
+        untrackedListeners.add(listener);
+    }
+
+    private void installLifecycleListener() {
+        processes.addListener((ListChangeListener<RemoteDesktopDockEntry>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    for (var entry : change.getAddedSubList()) {
+                        fireTracked(entry);
+                    }
+                }
+                if (change.wasRemoved()) {
+                    for (var entry : change.getRemoved()) {
+                        fireUntracked(entry);
+                    }
+                }
+            }
+        });
+    }
+
+    private void fireTracked(RemoteDesktopDockEntry entry) {
+        for (var listener : trackedListeners) {
+            try {
+                listener.accept(entry);
+            } catch (Throwable t) {
+                ErrorEventFactory.fromThrowable(t).handle();
+            }
+        }
+    }
+
+    private void fireUntracked(RemoteDesktopDockEntry entry) {
+        for (var listener : untrackedListeners) {
+            try {
+                listener.accept(entry);
+            } catch (Throwable t) {
+                ErrorEventFactory.fromThrowable(t).handle();
+            }
+        }
+    }
 
     public boolean supportsDocking() {
         return OsType.ofLocal() == OsType.WINDOWS;
