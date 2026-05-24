@@ -2,6 +2,7 @@ package io.xpipe.app.process;
 
 import io.xpipe.app.ext.DataStore;
 import io.xpipe.app.ext.StatefulDataStore;
+import io.xpipe.app.util.LicenseRequiredException;
 import io.xpipe.app.util.LicensedFeature;
 import io.xpipe.app.util.ThreadHelper;
 import io.xpipe.core.FailableConsumer;
@@ -119,8 +120,7 @@ public interface ShellControl extends ProcessControl {
 
     default <T extends ShellStoreState> ShellControl withShellStateFail(StatefulDataStore<T> store) {
         return onStartupFail(t -> {
-            // Ugly
-            if (t.getClass().getSimpleName().equals("LicenseRequiredException")) {
+            if (t instanceof LicenseRequiredException) {
                 return;
             }
 
