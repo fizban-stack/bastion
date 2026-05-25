@@ -105,40 +105,75 @@ public class AppBaseMode extends AppOperationMode {
         ThreadHelper.load(
                 true,
                 () -> {
-                    AppShellCheck.check();
-                    LocalShell.init();
+                    // Wrapped: shell init may fail when ProcessControlProvider is absent (stub proc
+                    // module). Latches must always count down to avoid deadlocking downstream threads.
+                    try {
+                        AppShellCheck.check();
+                        LocalShell.init();
+                    } catch (UnsupportedOperationException e) {
+                        TrackEvent.warn("Shell initialization skipped: " + e.getMessage());
+                    }
                     shellLoaded.countDown();
                     AppRosettaCheck.check();
                     AppWindowsArmCheck.check();
                     AppTestCommandCheck.check();
-                    // This might be slow on macOS and might take longer than the platform init
-                    AppPrefs.get().initDefaultValues();
-                    WorkspaceManager.init();
+                    // This might be slow on macOS and might take longer than the platform init.
+                    // Wrapped: initDefaultValues may throw when ProcessControlProvider is absent.
+                    // localPrefsLoaded MUST always count down to avoid deadlocking Thread 3.
+                    try {
+                        AppPrefs.get().initDefaultValues();
+                        WorkspaceManager.init();
+                    } catch (Throwable t) {
+                        TrackEvent.warn("Prefs/workspace init partially failed (stub proc build): " + t.getMessage());
+                    }
                     localPrefsLoaded.countDown();
                     PlatformInit.init(true);
                     TrackEvent.info("Shell initialization thread completed");
                 },
                 () -> {
                     shellLoaded.await();
-                    DataStorageSyncHandler.getInstance().init();
-                    if (DataStorageSyncHandler.getInstance().supportsSync()) {
-                        AppMainWindow.loadingText("loadingGpg");
-                        DataStorageSyncHandler.getInstance().prepareGpgIfNeeded();
-                        AppMainWindow.loadingText("loadingGit");
+                    // DataStorageSyncHandler requires ProcessControlProvider; skip sync when absent.
+                    if (ProcessControlProvider.get() != null) {
+                        DataStorageSyncHandler.getInstance().init();
+                        if (DataStorageSyncHandler.getInstance().supportsSync()) {
+                            AppMainWindow.loadingText("loadingGpg");
+                            DataStorageSyncHandler.getInstance().prepareGpgIfNeeded();
+                            AppMainWindow.loadingText("loadingGit");
+                        }
+                        DataStorageSyncHandler.getInstance().retrieveSyncedData();
+                    } else {
+                        TrackEvent.warn("Skipping data storage sync: ProcessControlProvider not available");
                     }
-                    DataStorageSyncHandler.getInstance().retrieveSyncedData();
                     AppMainWindow.loadingText("loadingSettings");
-                    AppPrefs.initSynced();
+                    // Wrapped: initSynced calls loadSharedRemote → LocalShell.getShell() which
+                    // throws when ProcessControlProvider absent. syncPrefsLoaded MUST count down.
+                    try {
+                        AppPrefs.initSynced();
+                    } catch (Throwable t) {
+                        TrackEvent.warn("Skipping synced prefs load (stub proc build): " + t.getMessage());
+                    }
                     syncPrefsLoaded.countDown();
                     AppMainWindow.loadingText("loadingConnections");
-                    DataStorage.init();
-                    AppPrefs.initStorage();
+                    // Wrapped: DataStorage.init / initStorage may also fail without local shell.
+                    // storageLoaded MUST count down to avoid deadlocking Thread 5 and 6.
+                    try {
+                        DataStorage.init();
+                        AppPrefs.initStorage();
+                    } catch (Throwable t) {
+                        TrackEvent.warn("Skipping storage init (stub proc build): " + t.getMessage());
+                    }
                     storageLoaded.countDown();
                     AppMcpServer.init();
                     iconsInit.await();
                     StoreFilterState.init();
                     StoreViewState.init();
-                    StoreQuickConnect.init();
+                    // Wrapped: StoreQuickConnect requires SSH/provider extensions not available in stub
+                    // proc builds. Non-fatal — quick-connect shortcut is disabled, core UI still works.
+                    try {
+                        StoreQuickConnect.init();
+                    } catch (Throwable t) {
+                        TrackEvent.warn("StoreQuickConnect skipped (stub proc build): " + t.getMessage());
+                    }
                     AppMainWindow.loadingText("loadingSettings");
                     TrackEvent.info("Connection storage initialization thread completed");
                 },
@@ -179,9 +214,15 @@ public class AppBaseMode extends AppOperationMode {
                 () -> {
                     BrowserIconManager.init();
                     shellLoaded.await();
-                    BrowserLocalFileSystem.init();
-                    storageLoaded.await();
-                    BrowserFullSessionModel.init();
+                    // Wrapped: BrowserLocalFileSystem/BrowserFullSessionModel need local shell.
+                    // browserLoaded MUST count down to avoid deadlocking Thread 3.
+                    try {
+                        BrowserLocalFileSystem.init();
+                        storageLoaded.await();
+                        BrowserFullSessionModel.init();
+                    } catch (Throwable t) {
+                        TrackEvent.warn("Browser file system skipped (stub proc build): " + t.getMessage());
+                    }
                     browserLoaded.countDown();
                     TrackEvent.info("Browser initialization thread completed");
                 });
@@ -213,12 +254,16 @@ public class AppBaseMode extends AppOperationMode {
         RemoteDesktopWindow.reset();
         AppPrefs.reset();
         DataStorage.reset();
-        DataStorageSyncHandler.getInstance().reset();
+        if (ProcessControlProvider.get() != null) {
+            DataStorageSyncHandler.getInstance().reset();
+        }
         SshLocalBridge.reset();
         BrowserFullSessionModel.DEFAULT.reset();
         LocalShell.reset(false);
         BrowserLocalFileSystem.reset();
-        ProcessControlProvider.get().reset();
+        if (ProcessControlProvider.get() != null) {
+            ProcessControlProvider.get().reset();
+        }
         AppBeaconServer.reset();
         KeePassXcPasswordManager.reset();
         StoreViewState.reset();

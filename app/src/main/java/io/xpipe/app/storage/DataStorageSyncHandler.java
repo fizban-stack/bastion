@@ -8,6 +8,10 @@ import java.util.List;
 public interface DataStorageSyncHandler {
 
     static DataStorageSyncHandler getInstance() {
+        // ProcessControlProvider absent in stub proc builds — return no-op stub.
+        if (ProcessControlProvider.get() == null) {
+            return NoOpStorageSyncHandler.INSTANCE;
+        }
         return (DataStorageSyncHandler) ProcessControlProvider.get().getStorageSyncHandler();
     }
 

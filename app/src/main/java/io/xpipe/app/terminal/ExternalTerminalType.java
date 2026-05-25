@@ -1,6 +1,7 @@
 package io.xpipe.app.terminal;
 
 import io.xpipe.app.ext.PrefsChoiceValue;
+import io.xpipe.app.ext.ProcessControlProvider;
 import io.xpipe.app.issue.ErrorEventFactory;
 import io.xpipe.app.prefs.AppPrefs;
 import io.xpipe.app.prefs.ExternalApplicationType;
@@ -577,6 +578,13 @@ public interface ExternalTerminalType extends PrefsChoiceValue {
     }
 
     static ExternalTerminalType determineDefault(ExternalTerminalType existing) {
+        // ProcessControlProvider absent in stub proc builds — skip terminal detection gracefully.
+        if (ProcessControlProvider.get() == null) {
+            return AppDistributionType.get() == AppDistributionType.WEBTOP
+                    ? ExternalTerminalType.KONSOLE
+                    : null;
+        }
+
         // Check for incompatibility with fallback shell
         if (ExternalTerminalType.CMD.equals(existing) && LocalShell.getDialect() != ShellDialects.CMD) {
             return ExternalTerminalType.POWERSHELL;

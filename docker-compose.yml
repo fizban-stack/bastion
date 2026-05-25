@@ -28,8 +28,8 @@ services:
 
     ports:
       # ── Web browser access to the desktop ─────────────────────────────────
-      - "3000:3000"   # Open http://your-server:3000 to see Bastion's GUI
-      - "3001:3001"   # HTTPS version (self-signed cert by default)
+      - "3008:3000"   # Open http://your-server:3000 to see Bastion's GUI
+      - "3009:3001"   # HTTPS version (self-signed cert by default)
 
       # ── Beacon API ────────────────────────────────────────────────────────
       - "21721:21721" # Bastion CLI and external integrations

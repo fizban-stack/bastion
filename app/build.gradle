@@ -119,6 +119,9 @@ run {
 
     workingDir = rootDir
     jvmArgs += ['-XX:+EnableDynamicAgentLoading']
+    // Force extension modules that provide no services (and are thus not auto-resolved by the
+    // module system's service-binding) into the module graph at runtime.
+    jvmArgs += ['--add-modules', 'io.xpipe.ext.proc,io.xpipe.ext.uacc']
 
     def exts = files(project.allExtensions.stream().map(p -> p.getTasksByName('jar', true)[0].outputs.files.singleFile).toList())
     classpath += exts

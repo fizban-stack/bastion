@@ -33,6 +33,11 @@ public class LocalShell {
 
     public static synchronized ShellControl init() throws Exception {
         if (local == null) {
+            // ProcessControlProvider absent in stub proc builds — skip shell init gracefully.
+            if (ProcessControlProvider.get() == null) {
+                throw new UnsupportedOperationException(
+                        "Local shell not available: ProcessControlProvider not initialized (proc module is a stub)");
+            }
             local = ProcessControlProvider.get()
                     .createLocalProcessControl(false)
                     .start();

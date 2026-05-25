@@ -72,6 +72,10 @@ public final class AppPrefs {
     }
 
     public static void initStorage() {
+        // ProcessControlProvider absent in stub proc builds — skip vault auth type detection.
+        if (ProcessControlProvider.get() == null) {
+            return;
+        }
         INSTANCE.vaultAuthentication.set(DataStorageUserHandler.getInstance().getVaultAuthenticationType());
     }
 
@@ -242,7 +246,10 @@ public final class AppPrefs {
             .build());
     final Property<ShellDialect> localShellDialect = map(Mapping.builder()
             .property(new GlobalObjectProperty<>(
-                    ProcessControlProvider.get().getAvailableLocalDialects().getFirst()))
+                    // ProcessControlProvider absent in stub proc builds — use null default.
+                    ProcessControlProvider.get() != null
+                            ? ProcessControlProvider.get().getAvailableLocalDialects().getFirst()
+                            : null))
             .key("localShellDialect")
             .valueClass(ShellDialect.class)
             .vaultSpecific(false)
@@ -884,16 +891,21 @@ public final class AppPrefs {
             useSystemFont.set(false);
         }
 
-        if (useLocalFallbackShell.get()) {
-            localShellDialect.setValue(
-                    ProcessControlProvider.get().getAvailableLocalDialects().get(1));
-            useLocalFallbackShell.set(false);
-        }
+        // ProcessControlProvider absent in stub proc builds — skip dialect normalization.
+        if (ProcessControlProvider.get() != null) {
+            if (useLocalFallbackShell.get()) {
+                localShellDialect.setValue(
+                        ProcessControlProvider.get().getAvailableLocalDialects().get(1));
+                useLocalFallbackShell.set(false);
+            }
 
-        if (localShellDialect.getValue() == null
-                || !ProcessControlProvider.get().getAvailableLocalDialects().contains(localShellDialect.getValue())) {
-            localShellDialect.setValue(
-                    ProcessControlProvider.get().getAvailableLocalDialects().getFirst());
+            if (localShellDialect.getValue() == null
+                    || !ProcessControlProvider.get()
+                            .getAvailableLocalDialects()
+                            .contains(localShellDialect.getValue())) {
+                localShellDialect.setValue(
+                        ProcessControlProvider.get().getAvailableLocalDialects().getFirst());
+            }
         }
 
         if (sshVerboseOutput.get()) {
@@ -919,11 +931,13 @@ public final class AppPrefs {
     }
 
     public OptionsBuilder getCustomOptions(String id) {
+        // Return an empty OptionsBuilder when the extension providing this pref is absent
+        // (e.g. proc module is a stub). Using orElseThrow() would crash the prefs UI.
         return customEntries.entrySet().stream()
                 .filter(e -> e.getKey().getKey().equals(id))
                 .findFirst()
                 .map(Map.Entry::getValue)
-                .orElseThrow();
+                .orElse(new OptionsBuilder());
     }
 
     private void loadLocal() {

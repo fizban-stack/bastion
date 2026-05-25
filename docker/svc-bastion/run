@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv bash
+# s6 supervised service — Bastion
+# Starts with the container, supervised (auto-restarted on crash).
+# with-contenv ensures Docker ENV vars (GRADLE_USER_HOME, DISPLAY, etc.) are loaded.
+
+BASTION_DATA_DIR="${BASTION_DATA_DIR:-/config/bastion}"
+BASTION_PORT="${BASTION_PORT:-21721}"
+
+mkdir -p "${BASTION_DATA_DIR}"
+chown abc:abc "${BASTION_DATA_DIR}" 2>/dev/null || true
+
+# Wait for X display to be ready before launching the GUI
+echo "[svc-bastion] Waiting for X display..."
+until s6-setuidgid abc xset q &>/dev/null; do
+    sleep 0.5
+done
+echo "[svc-bastion] Display ready — starting Bastion (data=${BASTION_DATA_DIR}, port=${BASTION_PORT})"
+
+cd /opt/bastion
+exec s6-setuidgid abc \
+    ./gradlew :app:run \
+    -Dio.xpipe.app.mode=gui \
+    -Dio.xpipe.app.dataDir="${BASTION_DATA_DIR}" \
+    -Dio.xpipe.beacon.port="${BASTION_PORT}" \
+    -Dio.xpipe.app.disableUpdateCheck=true \
+    -Dio.xpipe.app.fullVersion=true \
+    --no-daemon \
+    --console=plain

@@ -38,13 +38,20 @@ public class AppExtensionManager {
         INSTANCE.determineExtensionDirectories();
         INSTANCE.loadBaseExtension();
         INSTANCE.loadAllExtensions();
+        // ProcessControlProvider is optional — absent in open-source builds (stub proc module).
+        // Failure here is non-fatal: the app runs with reduced functionality (no local shell).
+        // ModuleLayerLoader MUST still run to initialize ShellDialects, DataStoreProviders, etc.
         try {
             ProcessControlProvider.init(INSTANCE.extendedLayer);
+        } catch (Throwable t) {
+            TrackEvent.warn("ProcessControlProvider not available (proc module is a stub): " + t.getMessage());
+        }
+        try {
             ModuleLayerLoader.loadAll(INSTANCE.extendedLayer, t -> {
                 ErrorEventFactory.fromThrowable(t).handle();
             });
         } catch (Throwable t) {
-            throw ExtensionException.corrupt("Service provider initialization failed", t);
+            throw ExtensionException.corrupt("Module layer loader initialization failed", t);
         }
     }
 

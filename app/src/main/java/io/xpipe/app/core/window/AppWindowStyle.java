@@ -28,6 +28,11 @@ public class AppWindowStyle {
             return;
         }
 
+        // Guard: AppPrefs may be null if ProcessControlProvider is absent (stub proc builds).
+        if (AppPrefs.get() == null) {
+            scene.setFill(Color.WHITE);
+            return;
+        }
         scene.fillProperty()
                 .bind(Bindings.createObjectBinding(
                         () -> {

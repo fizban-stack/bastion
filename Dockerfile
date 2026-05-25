@@ -54,14 +54,26 @@ RUN chmod +x /opt/bastion/gradlew
 # This makes Gradle caches persist across container recreations.
 ENV GRADLE_USER_HOME=/config/.gradle
 
-# ── Custom container-init script (runs before the desktop starts) ─────────────
+# ── Custom container-init script (runs before services start) ─────────────────
 # Fixes file ownership for the abc user (UID=PUID, configurable at runtime)
 # and creates the Bastion data directory.
-COPY docker/cont-init-bastion.sh /etc/cont-init.d/99-bastion.sh
-RUN chmod +x /etc/cont-init.d/99-bastion.sh
+# NOTE: linuxserver/webtop uses /custom-cont-init.d/ — NOT /etc/cont-init.d/
+RUN mkdir -p /custom-cont-init.d
+COPY docker/cont-init-bastion.sh /custom-cont-init.d/99-bastion.sh
+RUN chmod +x /custom-cont-init.d/99-bastion.sh
 
-# ── XFCE autostart: launches Bastion GUI when the desktop session starts ──────
-COPY docker/bastion.desktop /etc/xdg/autostart/bastion.desktop
+# ── s6 supervised service: Bastion ────────────────────────────────────────────
+# Replaces the old XFCE autostart mechanism. s6 supervision means:
+#   • Starts automatically when the container starts (not just on desktop open)
+#   • Uses with-contenv so Docker ENV vars (GRADLE_USER_HOME, etc.) are present
+#   • Auto-restarts if Bastion crashes
+COPY docker/svc-bastion/run /etc/s6-overlay/s6-rc.d/svc-bastion/run
+COPY docker/svc-bastion/type /etc/s6-overlay/s6-rc.d/svc-bastion/type
+COPY docker/svc-bastion/dependencies.d/svc-xorg /etc/s6-overlay/s6-rc.d/svc-bastion/dependencies.d/svc-xorg
+RUN chmod +x /etc/s6-overlay/s6-rc.d/svc-bastion/run \
+    && touch /etc/s6-overlay/s6-rc.d/user/contents.d/svc-bastion
+
+# ── Keep start-bastion-gui.sh for manual/debug use ────────────────────────────
 COPY docker/start-bastion-gui.sh /opt/bastion/docker/start-bastion-gui.sh
 RUN chmod +x /opt/bastion/docker/start-bastion-gui.sh
 

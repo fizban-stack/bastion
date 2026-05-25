@@ -51,7 +51,10 @@ public class SystemCategory extends AppPrefsCategory {
                         .pref(prefs.localShellDialect)
                         .addComp(
                                 new ShellDialectChoiceComp(
-                                                ProcessControlProvider.get().getAvailableLocalDialects(),
+                                                // ProcessControlProvider absent in stub proc builds.
+                                                ProcessControlProvider.get() != null
+                                                        ? ProcessControlProvider.get().getAvailableLocalDialects()
+                                                        : java.util.List.of(),
                                                 prefs.localShellDialect,
                                                 ShellDialectChoiceComp.NullHandling.NULL_DISABLED)
                                         .maxWidth(getCompWidth()),

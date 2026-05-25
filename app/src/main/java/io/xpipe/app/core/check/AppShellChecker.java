@@ -5,6 +5,7 @@ import io.xpipe.app.ext.ProcessControlProvider;
 import io.xpipe.app.issue.ErrorAction;
 import io.xpipe.app.issue.ErrorEvent;
 import io.xpipe.app.issue.ErrorEventFactory;
+import io.xpipe.app.issue.TrackEvent;
 import io.xpipe.app.process.*;
 import io.xpipe.app.util.DocumentationLink;
 
@@ -18,6 +19,12 @@ import java.util.Optional;
 public abstract class AppShellChecker {
 
     public void check() throws Exception {
+        // ProcessControlProvider absent in stub proc builds — skip check gracefully.
+        if (ProcessControlProvider.get() == null) {
+            TrackEvent.warn("Skipping shell self-test: ProcessControlProvider not available");
+            return;
+        }
+
         var isDefaultShell = ProcessControlProvider.get()
                 .getAvailableLocalDialects()
                 .getFirst()

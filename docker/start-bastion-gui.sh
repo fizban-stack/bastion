@@ -19,6 +19,7 @@ exec ./gradlew :app:run \
     -Dio.xpipe.app.dataDir="${BASTION_DATA_DIR}" \
     -Dio.xpipe.beacon.port="${BASTION_PORT}" \
     -Dio.xpipe.app.disableUpdateCheck=true \
+    -Dio.xpipe.app.fullVersion=true \
     --no-daemon \
     --console=plain \
     2>&1 | tee "${BASTION_DATA_DIR}/bastion.log"

@@ -13,6 +13,10 @@ import javax.crypto.SecretKey;
 public interface DataStorageUserHandler {
 
     static DataStorageUserHandler getInstance() {
+        // ProcessControlProvider absent in stub proc builds — return no-op stub.
+        if (ProcessControlProvider.get() == null) {
+            return NoOpStorageUserHandler.INSTANCE;
+        }
         return (DataStorageUserHandler) ProcessControlProvider.get().getStorageUserHandler();
     }
 
