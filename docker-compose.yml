@@ -44,9 +44,16 @@ services:
       # Required for some webtop desktop compositing features
       - seccomp:unconfined
 
-    # Healthcheck: Bastion beacon API is up
+    # Healthcheck: Bastion beacon API is up.
+    # Uses POST+JSON because the beacon handler reads the request body to
+    # deserialise the Request class (empty body causes a Jackson parse error).
+    # DaemonStatusExchangeImpl overrides requiresAuthentication=false so no
+    # token is needed here.
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:21721/daemon/status"]
+      test: ["CMD", "curl", "-sf", "-X", "POST",
+             "-H", "Content-Type: application/json",
+             "-d", "{}",
+             "http://localhost:21721/daemon/status"]
       interval: 30s
       timeout: 10s
       retries: 5

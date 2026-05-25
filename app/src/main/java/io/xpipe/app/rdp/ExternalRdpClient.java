@@ -2,6 +2,7 @@ package io.xpipe.app.rdp;
 
 import io.xpipe.app.core.AppLocalTemp;
 import io.xpipe.app.ext.PrefsValue;
+import io.xpipe.app.ext.ProcessControlProvider;
 import io.xpipe.app.prefs.AppPrefs;
 import io.xpipe.app.process.OsFileSystem;
 import io.xpipe.app.util.*;
@@ -47,6 +48,12 @@ public interface ExternalRdpClient extends PrefsValue {
     }
 
     static ExternalRdpClient determineDefault(ExternalRdpClient existing) {
+        // ProcessControlProvider absent in stub proc builds — isAvailable() calls
+        // LocalShell.getShell() which throws without a live local shell.
+        if (ProcessControlProvider.get() == null) {
+            return null;
+        }
+
         // Verify that our selection is still valid
         if (existing != null && existing.isAvailable()) {
             return existing;

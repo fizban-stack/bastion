@@ -46,7 +46,10 @@ public class BeaconRequestHandler<T> implements HttpHandler {
             return;
         }
 
-        if (!AppPrefs.get().disableApiAuthentication().get() && beaconInterface.requiresAuthentication()) {
+        // Evaluate requiresAuthentication() first so endpoints that opt out (e.g.
+        // DaemonStatusExchangeImpl) short-circuit before touching AppPrefs, which
+        // may still be null during early startup when requiresCompletedStartup=false.
+        if (beaconInterface.requiresAuthentication() && !AppPrefs.get().disableApiAuthentication().get()) {
             var auth = exchange.getRequestHeaders().getFirst("Authorization");
             if (auth == null) {
                 writeError(exchange, new BeaconClientErrorResponse("Missing Authorization header"), 401);

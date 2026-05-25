@@ -28,4 +28,11 @@ public class DaemonStatusExchangeImpl extends DaemonStatusExchange {
     public boolean requiresEnabledApi() {
         return false;
     }
+
+    @Override
+    public boolean requiresAuthentication() {
+        // Allow unauthenticated status queries so health checks and monitoring
+        // tools can poll the daemon without needing a token.
+        return false;
+    }
 }

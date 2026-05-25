@@ -2,6 +2,7 @@ package io.xpipe.app.prefs;
 
 import io.xpipe.app.core.AppSystemInfo;
 import io.xpipe.app.ext.PrefsChoiceValue;
+import io.xpipe.app.ext.ProcessControlProvider;
 import io.xpipe.app.issue.ErrorEventFactory;
 import io.xpipe.app.process.*;
 import io.xpipe.app.terminal.TerminalLaunch;
@@ -605,6 +606,12 @@ public interface ExternalEditorType extends PrefsChoiceValue {
             .get();
 
     static ExternalEditorType determineDefault(ExternalEditorType existing) {
+        // ProcessControlProvider absent in stub proc builds — isAvailable() calls
+        // LocalShell.getShell() which throws without a live local shell.
+        if (ProcessControlProvider.get() == null) {
+            return null;
+        }
+
         // Verify that our selection is still valid
         if (existing != null && existing.isAvailable()) {
             return existing;
